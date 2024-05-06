@@ -1,0 +1,64 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class TestMain {
+
+    public static void main(String[] args) {
+        // Sample data to test the decision tree
+        List<DataPoint> dataPoints = new ArrayList<>();
+        dataPoints.add(new DataPoint(new double[]{70}, new String[]{"Sunny"}, 1));
+        dataPoints.add(new DataPoint(new double[]{80}, new String[]{"Sunny"}, 1));
+        dataPoints.add(new DataPoint(new double[]{85}, new String[]{"Overcast"}, 1));
+        dataPoints.add(new DataPoint(new double[]{72}, new String[]{"Rainy"}, 0));
+        dataPoints.add(new DataPoint(new double[]{68}, new String[]{"Rainy"}, 0));
+        dataPoints.add(new DataPoint(new double[]{65}, new String[]{"Overcast"}, 1));
+        dataPoints.add(new DataPoint(new double[]{64}, new String[]{"Sunny"}, 0));
+
+        // Initialize the decision tree
+        decisionTree decisionTree = new decisionTree();
+
+        // Build the tree
+        Node root = decisionTree.buildDecisionTree(dataPoints);
+
+        // Print the tree structure to visualize it
+        printTree(root, 0);
+    }
+
+    // Helper method to print the tree
+    private static void printTree(Node node, int level) {
+        if (node == null) {
+            return;
+        }
+
+        // Prepare indentation for current level
+        StringBuilder prefix = new StringBuilder();
+        for (int i = 0; i < level; i++) {
+            prefix.append("   ");
+        }
+
+        // Check if the node is a leaf
+        if (node.isLeaf) {
+            System.out.println(prefix + "─ Leaf: Play = " + node.classLabel);
+        } else {
+            // Node details
+            if (node.isContinuous) {
+                // Continuous attribute split
+                System.out.println(prefix + "─ Node: If Attribute[" + node.splittingAttribute + "] <= " + node.splittingValue);
+                printTree(node.leftChild, level + 1);
+                System.out.println(prefix + "─ Node: If Attribute[" + node.splittingAttribute + "] > " + node.splittingValue);
+                printTree(node.rightChild, level + 1);
+            } else {
+                // Categorical attribute split
+                int childIndex = 0;
+                for (Node child : node.children) {
+                    String categoryName = "Category " + (childIndex++);
+                    System.out.println(prefix + "─ Node: If Category[" + node.splittingAttribute + "] == " + categoryName);
+                    printTree(child, level + 1);
+                }
+            }
+        }
+    }
+    
+
+}
