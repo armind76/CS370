@@ -19,7 +19,7 @@ public class decisionTree {
     }
 
     public Node buildDecisionTree(List<DataPoint> data) {
-        if (isPure(data)) {
+        if (isPure(data) || data.size() <= 1) {
             Node leaf = new Node();
             leaf.isLeaf = true;
             leaf.classLabel = data.get(0).classLabel;
@@ -27,6 +27,14 @@ public class decisionTree {
         }
     
         BestSplit bestSplit = findBestSplit(data);
+    
+        if (bestSplit.leftSplit.isEmpty() || bestSplit.rightSplit.isEmpty()) {
+            Node leaf = new Node();
+            leaf.isLeaf = true;
+            leaf.classLabel = majorityClassLabel(data);
+            return leaf;
+        }
+    
         Node node = new Node();
         node.splittingAttribute = bestSplit.attribute;
         node.isContinuous = bestSplit.isContinuous;
@@ -59,28 +67,28 @@ public class decisionTree {
         return true;
     }
 
-    private BestSplit findBestSplit(List<DataPoint> data) {
+    public BestSplit findBestSplit(List<DataPoint> data) {
         BestSplit bestSplit = new BestSplit();
         double bestImpurity = Double.MAX_VALUE;
-
-        // Continous attributes
+    
+        // Continuous attributes
         for (int attribute = 0; attribute < data.get(0).attributes.length; attribute++) {
             final int currentAttribute = attribute; // final variable for use in lambda
             data.sort(Comparator.comparingDouble(dp -> dp.attributes[currentAttribute]));
-        
+    
             List<DataPoint> leftSplit = new ArrayList<>();
             List<DataPoint> rightSplit = new ArrayList<>(data);
-        
+    
             for (int i = 1; i < data.size(); i++) {
                 leftSplit.add(data.get(i - 1));
                 rightSplit.remove(0);
-        
+    
                 if (data.get(i).attributes[currentAttribute] > data.get(i - 1).attributes[currentAttribute]) {
                     double splitPoint = (data.get(i).attributes[currentAttribute] + data.get(i - 1).attributes[currentAttribute]) / 2;
                     double leftGini = calculateGini(leftSplit);
                     double rightGini = calculateGini(rightSplit);
                     double weightedGini = (leftGini * leftSplit.size() + rightGini * rightSplit.size()) / data.size();
-        
+    
                     if (weightedGini < bestImpurity) {
                         bestImpurity = weightedGini;
                         bestSplit.attribute = currentAttribute;
@@ -92,29 +100,39 @@ public class decisionTree {
                 }
             }
         }
-
-    for (int attribute = 0; attribute < data.get(0).categories.length; attribute++) {
-    Map<String, List<DataPoint>> currentSplits = new HashMap<>();
-    for (DataPoint dp : data) {
-        currentSplits.computeIfAbsent(dp.categories[attribute], k -> new ArrayList<>()).add(dp);
-    }
-
-    double currentImpurity = 0.0;
-    for (List<DataPoint> splitList : currentSplits.values()) {
-        currentImpurity += calculateGini(splitList) * splitList.size();
-    }
-    currentImpurity /= data.size();
-
-    if (currentImpurity < bestImpurity) {
-        bestImpurity = currentImpurity;
-        bestSplit.isContinuous = false;
-        bestSplit.attribute = attribute;
-        bestSplit.categorySplits = new HashMap<>(currentSplits);
-    }
-}
-
+    
+        // Categorical attributes
+        for (int attribute = 0; attribute < data.get(0).categories.length; attribute++) {
+            Map<String, List<DataPoint>> currentSplits = new HashMap<>();
+            for (DataPoint dp : data) {
+                currentSplits.computeIfAbsent(dp.categories[attribute], k -> new ArrayList<>()).add(dp);
+            }
+    
+            double currentImpurity = 0.0;
+            for (List<DataPoint> splitList : currentSplits.values()) {
+                currentImpurity += calculateGini(splitList) * splitList.size();
+            }
+            currentImpurity /= data.size();
+                
+    
+            if (currentImpurity < bestImpurity) {
+                bestImpurity = currentImpurity;
+                bestSplit.isContinuous = false;
+                bestSplit.attribute = attribute;
+                bestSplit.categorySplits = new HashMap<>(currentSplits);
+            }
+        }
+    
         return bestSplit;
     }
+    private int majorityClassLabel(List<DataPoint> data) {
+        Map<Integer, Integer> labelCounts = new HashMap<>();
+        for (DataPoint point : data) {
+            labelCounts.merge(point.classLabel, 1, Integer::sum);
+        }
+        return Collections.max(labelCounts.entrySet(), Map.Entry.comparingByValue()).getKey();
+    }
+    
 
     class BestSplit {
         int attribute;
@@ -125,5 +143,3 @@ public class decisionTree {
         Map<String, List<DataPoint>> categorySplits;
     }
 }
-
-
