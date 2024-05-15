@@ -3,8 +3,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HttpGet {
+	
 	public HttpGet() {}
 	String token = "RGAPI-f5f70f58-a71e-426b-b424-df7aeb2391eb";
 	String getIDURL ="https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/";
@@ -51,7 +54,6 @@ public class HttpGet {
 		while ((result = in.readLine()) != null) {
 			    content.append(result);
 			}
-		System.out.println(content); 
 			int i = 0;
 			int j = 0;
 			String[] matchID = {"","","","","","","","","","",""};
@@ -61,7 +63,7 @@ public class HttpGet {
 				}
 				if(content.charAt(i) == ',') {
 					j++;
-					System.out.println(j);
+					
 				}
 				i++;
 			}
@@ -69,6 +71,7 @@ public class HttpGet {
 	}
 	
 	public void detailHistory(String[] matchID) throws IOException{
+		List<MatchData> lm = new ArrayList<>();
 		for (String a: matchID ) {
 			if(a == "") {continue;}
 			URL url = new URL(detailURL + a + "?api_key=" + token);
@@ -79,10 +82,37 @@ public class HttpGet {
 			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 			String result;
 			StringBuffer content = new StringBuffer();
+			String make ="";
 			while ((result = in.readLine()) != null) {
+					make = make+result;
 				    content.append(result);
 				}
-			System.out.println(content); 
+			MatchData temp = new MatchData();
+			System.out.println(make.charAt(make.indexOf("role") + 7 ));
+			
+			switch (make.charAt(make.indexOf("role")) + 7) {
+            case 'c':  temp.playerRole = "BOT";
+                     break;
+            case 's':  temp.playerRole = "TOP";
+                     break;
+            case 'n':  temp.playerRole = "SUPPORT";
+                     break;
+            case 'j' :  temp.playerRole = "JUNGLE";
+                     break;
+            default:  temp.playerRole = "MID";
+                     break;
+   
+        }
+			
+			
+			
+			if((make.charAt(make.indexOf("win")) + 5 == 't')){
+				temp.winLoss= "1";
+			}else {
+				temp.winLoss= "0";
+			}
+			
+			
 				in.close();
 		}
 	}

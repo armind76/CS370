@@ -125,5 +125,3 @@ public class decisionTree {
         Map<String, List<DataPoint>> categorySplits;
     }
 }
-
-
